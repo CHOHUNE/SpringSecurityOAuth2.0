@@ -1,23 +1,30 @@
 package com.example.oauthexample.service;
 
 
+import com.example.oauthexample.Repository.UserRepository;
 import com.example.oauthexample.dto.CustomOAuth2User;
 import com.example.oauthexample.dto.GoggleResponse;
 import com.example.oauthexample.dto.NaverResponse;
 import com.example.oauthexample.dto.OAuth2Response;
+import com.example.oauthexample.entity.UserEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
+@RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService{
 
 //    타 블로그 글을 보면 OAuth2UserService를 상속 받거나 직접 구현 하는 경우가 있는데
 //    DefaultOAuth2UserService는 구현체이기에 이대로 진행 해도무관하다
 
-
+    //DB 저장을 진행 하기 위해 유저 래퍼지토리 주입
+    private final UserRepository userRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -47,7 +54,36 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService{
         // 네이버로 인터페이스를 구현, 구글 타입으로 인터페이스를 구현하는 식으로 진행한다.
 
 
-        String role = "ROLE_USER";
+
+        // DB 저장 단 구현 부분
+        String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
+        UserEntity existData = userRepository.findByUsername(username);
+
+        String role = null;
+
+        if (existData == null) {
+            //없을 시 생성
+
+            UserEntity userEntity = new UserEntity();
+            userEntity.setUsername(username);
+            userEntity.setRole(oAuth2Response.getEmail());
+            userEntity.setEmail("ROLE_USER");
+
+            userRepository.save(userEntity);
+        }else{
+
+            role =existData.getRole();
+
+            existData.setEmail(oAuth2Response.getEmail());
+
+            userRepository.save(existData);
+
+            //있을 시 업데이트
+        }
+
+
+
+
         return new CustomOAuth2User(oAuth2Response, role);
     }
 }
