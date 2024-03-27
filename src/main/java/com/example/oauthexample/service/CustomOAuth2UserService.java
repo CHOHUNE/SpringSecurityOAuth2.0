@@ -1,6 +1,7 @@
 package com.example.oauthexample.service;
 
 
+import com.example.oauthexample.dto.CustomOAuth2User;
 import com.example.oauthexample.dto.GoggleResponse;
 import com.example.oauthexample.dto.NaverResponse;
 import com.example.oauthexample.dto.OAuth2Response;
@@ -45,6 +46,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService{
         // 따라서 OAuth2 DTO 객체 격인 OAuth2Response 객체를 인터페이스로 만든다.
         // 네이버로 인터페이스를 구현, 구글 타입으로 인터페이스를 구현하는 식으로 진행한다.
 
-        return super.loadUser(userRequest);
+
+        String role = "ROLE_USER";
+        return new CustomOAuth2User(oAuth2Response, role);
     }
 }
